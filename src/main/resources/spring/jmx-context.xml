@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:osgi="http://www.springframework.org/schema/osgi"
+       xmlns:p="http://www.springframework.org/schema/p" xmlns:jms="http://www.springframework.org/schema/jms"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/osgi
+       http://www.springframework.org/schema/osgi/spring-osgi.xsd http://www.springframework.org/schema/jms http://www.springframework.org/schema/jms/spring-jms.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+
+    <context:mbean-export/>
+    <!--
+         Configure the Atomikos JMX transaction
+         service to administer pending transactions
+    -->
+    <bean id="jmxTransactionService"
+          class="com.atomikos.icatch.admin.jmx.JmxTransactionService">
+        <!-- Optional: show only heuristic problem cases -->
+        <property name="heuristicsOnly" value="false"/>
+    </bean>
+
+    <!-- Spring JMX config -->
+    <bean id="mbeanServer"
+          class="org.springframework.jmx.support.MBeanServerFactoryBean"/>
+
+    <!--
+         Export the Atomikos JMX transaction service
+         to the local JMX service in the running VM (1.5 or higher)
+    -->
+    <bean id="exporter" class="org.springframework.jmx.export.MBeanExporter">
+        <property name="beans">
+            <map>
+                <entry key="atomikos:name=tx-service" value-ref="jmxTransactionService"/>
+            </map>
+        </property>
+        <property name="server" ref="mbeanServer"/>
+    </bean>
+
+</beans>

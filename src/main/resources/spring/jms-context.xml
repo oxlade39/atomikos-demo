@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:osgi="http://www.springframework.org/schema/osgi"
+       xmlns:p="http://www.springframework.org/schema/p" xmlns:jms="http://www.springframework.org/schema/jms"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/osgi
+       http://www.springframework.org/schema/osgi/spring-osgi.xsd http://www.springframework.org/schema/jms http://www.springframework.org/schema/jms/spring-jms.xsd">
+
+
+    <!--
+         Configure the JMS connector;
+         call init to register for recovery!
+    -->
+    <bean id="connectionFactory"
+          class="com.atomikos.jms.AtomikosConnectionFactoryBean"
+          init-method="init">
+        <property name="uniqueResourceName" value="amq1"/>
+        <property name="xaConnectionFactory">
+            <bean class="org.apache.activemq.spring.ActiveMQXAConnectionFactory"
+                  p:brokerURL="${jms.broker.url}"/>
+        </property>
+        <property name="maxPoolSize" value="10"/>
+        <property name="localTransactionMode" value="false"/>
+    </bean>
+
+    <bean id="xaJmsTemplate" class="org.springframework.jms.core.JmsTemplate">
+        <constructor-arg index="0" ref="connectionFactory"/>
+        <property name="sessionTransacted" value="true" />
+    </bean>
+
+    <jms:listener-container
+            transaction-manager="jtaTransactionManager"
+            connection-factory="connectionFactory"
+            acknowledge="transacted">
+        <jms:listener destination="q.name" ref="intSetter" method="setInteger"/>
+    </jms:listener-container>
+
+    <jms:listener-container
+            transaction-manager="jtaTransactionManager"
+            connection-factory="connectionFactory"
+            acknowledge="transacted">
+        <jms:listener destination="failing.q" ref="failingListener" method="setInteger"/>
+    </jms:listener-container>
+
+    <bean id="intSetter" class="com.doxla.TestListener" >
+        <constructor-arg index="0" ref="sessionFactory" />
+        <constructor-arg index="1" ref="xaJmsTemplate" />
+    </bean>
+
+    <bean id="failingListener" class="com.doxla.FailingTestListener"
+          parent="intSetter" />
+
+</beans>

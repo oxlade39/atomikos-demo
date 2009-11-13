@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:osgi="http://www.springframework.org/schema/osgi"
+       xmlns:p="http://www.springframework.org/schema/p"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/osgi
+       http://www.springframework.org/schema/osgi/spring-osgi.xsd">
+
+
+    <bean id="sessionFactory"
+          class="org.springframework.orm.hibernate3.annotation.AnnotationSessionFactoryBean">
+        <property name="dataSource" ref="${datasource.bean.ref}"/>
+        <property name="hibernateProperties">
+            <props>
+                <prop key="hibernate.dialect" >${hibernate.dialect}</prop>
+                <prop key="hibernate.hbm2ddl.auto">${hibernate.hbm2ddl.auto}</prop>
+                <prop key="hibernate.current_session_context_class">jta</prop>
+                <prop key="hibernate.transaction.factory_class">org.hibernate.transaction.JTATransactionFactory</prop>
+                <prop key="hibernate.transaction.manager_lookup_class">com.atomikos.icatch.jta.hibernate3.TransactionManagerLookup</prop>
+                <prop key="hibernate.connection.release_mode">on_close</prop>
+                <prop key="hibernate.show_sql">true</prop>
+            </props>
+        </property>
+        <property name="annotatedClasses">
+            <list>
+                <value>com.doxla.Domain</value>
+            </list>
+        </property>
+    </bean>
+
+    <bean id="nonXaDatasource" class="com.atomikos.jdbc.nonxa.AtomikosNonXADataSourceBean">
+        <property name="uniqueResourceName" value="nonXaDatasource"/>
+        <property name="driverClassName" value="${datasource.driver.class}" />
+        <property name="url" value="${datasource.jdbc.url}" />
+        <property name="user" value="${datasource.username}" />
+        <property name="password" value="${datasource.password}" />
+        <property name="poolSize" value="${datasource.pool.size}" />
+    </bean>
+
+    <!--<bean id="atomikosDataSourceBean" class="com.atomikos.jdbc.AtomikosDataSourceBean">-->
+        <!--<property name="xaDataSource" ref="oracleXAdataSource" />-->
+        <!--<property name="uniqueResourceName" value="AtomikosDataSource" />-->
+        <!--<property name="poolSize" value="5" />-->
+    <!--</bean>-->
+
+    <!--<bean id="oracleXAdataSource" class="oracle.jdbc.xa.client.OracleXADataSource" destroy-method="close">-->
+        <!--<property name="URL" value="${jdbc.url}" />-->
+        <!--<property name="user" value="${jdbc.username}" />-->
+        <!--<property name="password" value="${jdbc.password}" />-->
+    <!--</bean>-->
+
+</beans>
