@@ -44,10 +44,12 @@ public class MultiResourceTransactionSucceedsTest extends TransactionCallbackWit
     @Before
     public void registerAtomikosShutdown(){
         tx.registerShutdownHook();
+	//	hibernate.deleteAllEntities(Domain.class);
     }
 
     @Test
     public void testJmsTransactions() throws Exception {
+
         assertTrue(TransactionSynchronizationManager.isActualTransactionActive());
         jmsTemplate.convertAndSend(Q_NAME, random);
     }

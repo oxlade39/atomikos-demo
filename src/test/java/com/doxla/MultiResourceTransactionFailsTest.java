@@ -2,6 +2,8 @@ package com.doxla;
 
 import org.junit.runner.RunWith;
 import static org.junit.Assert.*;
+
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.Before;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -28,58 +30,67 @@ import javax.jms.JMSException;
 import javax.jms.Message;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(locations = {
-        "classpath*:/spring/*-context.xml"
-})
+@ContextConfiguration(locations = { "classpath*:/spring/*-context.xml" })
 @Transactional
-@TransactionConfiguration(
-        transactionManager = "jtaTransactionManager",
-        defaultRollback = false
-)
-public class MultiResourceTransactionFailsTest extends TransactionCallbackWithoutResult{
+@TransactionConfiguration(transactionManager = "jtaTransactionManager", defaultRollback = false)
+public class MultiResourceTransactionFailsTest extends TransactionCallbackWithoutResult {
 
-    @Autowired private HibernateSessionTestUtil hibernate;
-    @Autowired private AtomikosTransactionManagerTestUtil tx;
-    @Autowired private TransactionTemplate transactionTemplate;
-    @Autowired private JmsTemplate jmsTemplate;
-    @Autowired private FailingTestListener testListener;
-    @Autowired private JmsTestUtil jms;
+	@Autowired
+	private HibernateSessionTestUtil hibernate;
+	@Autowired
+	private AtomikosTransactionManagerTestUtil tx;
+	@Autowired
+	private TransactionTemplate transactionTemplate;
+	@Autowired
+	private JmsTemplate jmsTemplate;
+	@Autowired
+	private FailingTestListener testListener;
+	@Autowired
+	private JmsTestUtil jms;
 
-    private static final String Q_NAME = "failing.q";
-    private Integer random = new Random().nextInt();
+	private static final String Q_NAME = "failing.q";
+	private Integer random = new Random().nextInt();
 
-    @Before
-    public void cleanDB(){
-        tx.registerShutdownHook();
-        hibernate.deleteAllEntities(Domain.class);
-    }
+	@Before
+	public void cleanDB() {
+		tx.registerShutdownHook();
+		hibernate.deleteAllEntities(Domain.class);
+	}
 
-    @Test
-    public void testJmsTransactions() throws Exception {
-        jmsTemplate.convertAndSend(Q_NAME, random);
-    }
+	@Test
 
-    @AfterTransaction
-    public void verifyMessageNotReceived() throws Exception {
-        transactionTemplate.execute(this);
-    }
+	public void testJmsTransactions() {
 
-    protected void doInTransactionWithoutResult(TransactionStatus status) {
-        try {
-            TimeUnit.SECONDS.sleep(1);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        assertEquals(random, testListener.getInteger());
-        try{
-            Message message = jms.waitForMessage("new.q", 500);
-            assertNull("Message was delivered to queue when transaction should have rolled back",
-                    message);
-        }catch (JMSException e){
-            throw new RuntimeException("Waiting for messaged failed", e);
-        }
+		jmsTemplate.convertAndSend(Q_NAME, random);
 
-        List<Domain> list = hibernate.allOf(Domain.class);
-        assertEquals(0, list.size());
-    }
+	}
+
+	@AfterTransaction
+	public void verifyMessageNotReceived() throws Exception {
+		try {
+			transactionTemplate.execute(this);
+			Assert.fail("should not happen...");
+		} catch (RuntimeException e) {
+
+			// success
+		}
+	}
+
+	protected void doInTransactionWithoutResult(TransactionStatus status) {
+		try {
+			TimeUnit.SECONDS.sleep(1);
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+		}
+		assertEquals(random, testListener.getInteger());
+		try {
+			Message message = jms.waitForMessage("new.q", 500);
+			assertNull("Message was delivered to queue when transaction should have rolled back", message);
+		} catch (JMSException e) {
+			throw new RuntimeException("Waiting for messaged failed", e);
+		}
+
+		List<Domain> list = hibernate.allOf(Domain.class);
+		assertEquals(0, list.size());
+	}
 }

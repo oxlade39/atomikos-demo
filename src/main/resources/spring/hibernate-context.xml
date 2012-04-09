@@ -30,14 +30,29 @@
         </property>
     </bean>
 
-    <bean id="nonXaDatasource" class="com.atomikos.jdbc.nonxa.AtomikosNonXADataSourceBean">
+    <!-- <bean id="nonXaDatasource" class="com.atomikos.jdbc.nonxa.AtomikosNonXADataSourceBean">
         <property name="uniqueResourceName" value="nonXaDatasource"/>
         <property name="driverClassName" value="${datasource.driver.class}" />
         <property name="url" value="${datasource.jdbc.url}" />
         <property name="user" value="${datasource.username}" />
         <property name="password" value="${datasource.password}" />
         <property name="poolSize" value="${datasource.pool.size}" />
-    </bean>
+    </bean> -->
+
+    <bean id="atomikosDataSource" class="com.atomikos.jdbc.AtomikosDataSourceBean"
+		init-method="init" destroy-method="close">
+		<property name="uniqueResourceName" value="AtomikosDataSource" />
+		<property name="xaDataSourceClassName" value="org.apache.derby.jdbc.EmbeddedXADataSource" />
+		<property name="xaProperties">
+			<props>
+				<prop key="databaseName">target/Atomikos</prop>
+				<prop key="createDatabase">create</prop>
+			</props>
+		</property>
+		<property name="minPoolSize" value="1" />
+		<property name="maxPoolSize" value="5" />
+		<property name="borrowConnectionTimeout" value="10000" />
+	</bean>
 
     <!--<bean id="atomikosDataSourceBean" class="com.atomikos.jdbc.AtomikosDataSourceBean">-->
         <!--<property name="xaDataSource" ref="oracleXAdataSource" />-->
